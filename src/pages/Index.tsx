@@ -3,6 +3,7 @@ import { useState } from 'react';
 import VoiceInput from '../components/VoiceInput';
 import ResponseDisplay from '../components/ResponseDisplay';
 import { toast } from 'sonner';
+import { sendMessageToPythonBackend } from '../services/messageService';
 
 const Index = () => {
   const [transcript, setTranscript] = useState('');
@@ -14,10 +15,9 @@ const Index = () => {
     setIsLoading(true);
     
     try {
-      // TODO: Replace with actual SL API integration
-      // This is a mock response for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setResponse("This is a mock response. The SL API integration will be implemented once you provide the API key.");
+      // Call the Python backend with the user input
+      const pythonResponse = await sendMessageToPythonBackend(text);
+      setResponse(pythonResponse);
     } catch (error) {
       console.error('Error fetching response:', error);
       toast.error('Failed to get metro information. Please try again.');

@@ -2,7 +2,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+// This Edge Function can be used as a proxy to your Python backend
+// if you decide to host your Python code separately
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,29 +17,25 @@ serve(async (req) => {
 
   try {
     const { query } = await req.json();
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    
+    // Replace this URL with your actual Python API endpoint
+    const pythonBackendUrl = Deno.env.get('PYTHON_BACKEND_URL') || 'http://localhost:5000/api/message';
+    
+    const response = await fetch(pythonBackendUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful assistant that answers questions about the Stockholm metro system. Format your responses in a clear and concise way.'
-          },
-          { role: 'user', content: query }
-        ],
-      }),
+      body: JSON.stringify({ user_input: query }),
     });
 
-    const data = await response.json();
-    const answer = data.choices[0].message.content;
+    if (!response.ok) {
+      throw new Error(`Python backend returned status: ${response.status}`);
+    }
 
-    return new Response(JSON.stringify({ answer }), {
+    const data = await response.json();
+
+    return new Response(JSON.stringify({ answer: data.response }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
