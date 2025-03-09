@@ -30,18 +30,26 @@
 
 @layer utilities {
   .animate-in {
-    animation: animate-in 0.5s ease-out;
+    animation: animate-in 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   }
   
   @keyframes animate-in {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(20px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-metro-blue to-metro-red;
+  }
+
+  .glassmorphism {
+    @apply backdrop-blur-md bg-white/70 border border-white/20 shadow-sm;
   }
 }
 
@@ -51,16 +59,20 @@
 
 body {
   @apply bg-background text-foreground antialiased;
+  font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
 }
 
 .animate-pulse-ring {
-  animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
 
 @keyframes pulse-ring {
   0% {
-    transform: scale(0.8);
-    opacity: 0.5;
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.3;
   }
   100% {
     transform: scale(2);

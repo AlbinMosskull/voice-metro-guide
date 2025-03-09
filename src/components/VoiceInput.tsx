@@ -53,40 +53,48 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript }) => {
   };
 
   return (
-    <div className="flex flex-col items-center space-y-6 w-full max-w-md">
-      <button
-        onClick={startListening}
-        className={`relative p-6 rounded-full transition-all duration-300 ease-in-out
-          ${isListening ? 'bg-metro-red' : 'bg-metro-gray hover:bg-gray-200'}`}
-        aria-label="Start voice input"
-      >
-        <Mic 
-          className={`w-8 h-8 transition-colors duration-300
-            ${isListening ? 'text-white' : 'text-gray-700'}`}
-        />
-        {isListening && (
-          <span className="absolute inset-0 rounded-full animate-pulse-ring bg-metro-red/50" />
-        )}
-      </button>
+    <div className="flex flex-col items-center space-y-8 w-full max-w-md">
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-metro-blue/20 to-metro-red/20 rounded-full blur-xl transform scale-105 -z-10"></div>
+        <button
+          onClick={startListening}
+          className={`relative p-7 rounded-full transition-all duration-300 ease-in-out shadow-lg 
+            ${isListening 
+              ? 'bg-gradient-to-br from-metro-red to-metro-red/80 scale-105' 
+              : 'bg-white hover:bg-gray-50 border border-gray-100'}`}
+          aria-label="Start voice input"
+        >
+          <Mic 
+            className={`w-8 h-8 transition-colors duration-300
+              ${isListening ? 'text-white' : 'text-metro-blue'}`}
+          />
+          {isListening && (
+            <span className="absolute inset-0 rounded-full animate-pulse-ring bg-metro-red/30" />
+          )}
+        </button>
+      </div>
 
       <div className="w-full">
-        <p className="text-center text-sm text-gray-500 mb-2">or type your question</p>
-        <form onSubmit={handleTextSubmit} className="flex gap-2">
-          <input
-            type="text"
-            value={textInput}
-            onChange={(e) => setTextInput(e.target.value)}
-            placeholder="Type your question here..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-metro-red/50"
-          />
-          <button
-            type="submit"
-            className="p-2 rounded-lg bg-metro-red text-white hover:bg-metro-red/90 transition-colors disabled:opacity-50"
-            disabled={!textInput.trim()}
-          >
-            <Send className="w-5 h-5" />
-          </button>
-        </form>
+        <p className="text-center text-sm font-medium text-gray-500 mb-3">or type your question</p>
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-metro-blue/10 to-metro-red/10 rounded-lg blur-md transform scale-105 -z-10"></div>
+          <form onSubmit={handleTextSubmit} className="flex gap-2 relative">
+            <input
+              type="text"
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              placeholder="Type your question here..."
+              className="flex-1 px-5 py-3 rounded-lg bg-white border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-metro-red/30 transition-all"
+            />
+            <button
+              type="submit"
+              className="p-3 rounded-lg bg-gradient-to-r from-metro-blue to-metro-red text-white hover:opacity-90 transition-all shadow-sm disabled:opacity-50 disabled:hover:opacity-50"
+              disabled={!textInput.trim()}
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
