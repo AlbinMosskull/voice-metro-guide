@@ -4,18 +4,19 @@
  */
 
 /**
- * Sends a signal to the Python backend to start voice recording
- * @returns A promise that resolves with the transcription result
+ * Sends a signal to the Python backend to toggle voice recording
+ * @param isRecording Boolean indicating whether to start or stop recording
+ * @returns A promise that resolves with the transcription result when stopping recording
  */
-export const startVoiceRecording = async (): Promise<string> => {
+export const toggleVoiceRecording = async (isRecording: boolean): Promise<string | void> => {
   try {
-    // Send a request to the Python backend to start recording
+    // Send a request to the Python backend with the recording state
     const response = await fetch('http://localhost:5000/api/record', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action: 'start_recording' }),
+      body: JSON.stringify({ is_recording: isRecording }),
     });
 
     if (!response.ok) {
@@ -23,34 +24,13 @@ export const startVoiceRecording = async (): Promise<string> => {
     }
 
     const data = await response.json();
-    return data.transcript;
-  } catch (error) {
-    console.error('Error communicating with voice recording service:', error);
-    throw error;
-  }
-};
-
-/**
- * Sends a signal to the Python backend to stop voice recording
- * @returns A promise that resolves with the transcription result
- */
-export const stopVoiceRecording = async (): Promise<string> => {
-  try {
-    // Send a request to the Python backend to stop recording and get the transcript
-    const response = await fetch('http://localhost:5000/api/record', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ action: 'stop_recording' }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
+    
+    // Only return transcript when stopping recording
+    if (!isRecording && data.transcript) {
+      return data.transcript;
     }
-
-    const data = await response.json();
-    return data.transcript;
+    
+    return;
   } catch (error) {
     console.error('Error communicating with voice recording service:', error);
     throw error;

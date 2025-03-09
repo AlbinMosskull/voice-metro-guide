@@ -29,7 +29,7 @@ python python_voice_recording_example.py
 
 Once the Python backend is running, the React frontend should be able to communicate with it. You can test this by:
 
-1. Clicking the microphone button to start/stop recording via the Python backend
+1. Clicking the microphone button to toggle recording via the Python backend
 2. Speaking into the microphone (handled by Python)
 3. Or typing in the text input
 4. The frontend will send the request to this Python backend
@@ -39,10 +39,10 @@ Once the Python backend is running, the React frontend should be able to communi
 ## Voice Recording Backend
 
 The `python_voice_recording_example.py` file demonstrates:
-- How to handle start/stop recording requests from the frontend
+- How to handle a simple boolean toggle for recording
 - Using SpeechRecognition library to record and transcribe audio
 - Managing recording state in a background thread
-- Returning the transcription to the frontend
+- Returning the transcription to the frontend when recording stops
 
 ## Text Processing Backend 
 
@@ -79,28 +79,21 @@ You can customize the `manage_incoming_message` function to:
 
 ### POST /api/record
 
-**Request Body for starting recording:**
+**Request Body:**
 ```json
 {
-  "action": "start_recording"
+  "is_recording": true
 }
 ```
 
-**Response:**
+**Response when starting recording:**
 ```json
 {
   "status": "recording_started"
 }
 ```
 
-**Request Body for stopping recording:**
-```json
-{
-  "action": "stop_recording"
-}
-```
-
-**Response:**
+**Response when stopping recording:**
 ```json
 {
   "transcript": "När går nästa tåg till T-Centralen?"

@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Mic, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { startVoiceRecording, stopVoiceRecording } from '../services/voiceService';
+import { toggleVoiceRecording } from '../services/voiceService';
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
@@ -14,20 +13,15 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript }) => {
 
   const handleVoiceInput = async () => {
     try {
-      if (!isListening) {
-        // Start recording via Python backend
-        setIsListening(true);
-        await startVoiceRecording();
-      } else {
-        // Stop recording and get transcript
-        const transcript = await stopVoiceRecording();
-        setIsListening(false);
-        
-        if (transcript) {
-          onTranscript(transcript);
-        } else {
-          toast.error('No speech was detected. Please try again.');
-        }
+      // Toggle recording state
+      setIsListening(!isListening);
+      
+      // Send the new recording state to the backend
+      const result = await toggleVoiceRecording(!isListening);
+      
+      // If we're stopping recording and got a transcript, process it
+      if (isListening && result) {
+        onTranscript(result);
       }
     } catch (error) {
       console.error('Voice recording error:', error);
