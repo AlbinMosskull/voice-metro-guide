@@ -1,7 +1,8 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Mic, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { startVoiceRecording, stopVoiceRecording } from '../services/voiceService';
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
@@ -11,38 +12,29 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript }) => {
   const [isListening, setIsListening] = useState(false);
   const [textInput, setTextInput] = useState("");
 
-  const startListening = useCallback(async () => {
+  const handleVoiceInput = async () => {
     try {
-      const recognition = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
-      recognition.lang = 'sv-SE';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => {
+      if (!isListening) {
+        // Start recording via Python backend
         setIsListening(true);
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        onTranscript(transcript);
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        toast.error('Could not understand speech. Please try again.');
+        await startVoiceRecording();
+      } else {
+        // Stop recording and get transcript
+        const transcript = await stopVoiceRecording();
         setIsListening(false);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
+        
+        if (transcript) {
+          onTranscript(transcript);
+        } else {
+          toast.error('No speech was detected. Please try again.');
+        }
+      }
     } catch (error) {
-      console.error('Speech recognition error:', error);
-      toast.error('Speech recognition is not supported in this browser.');
+      console.error('Voice recording error:', error);
+      toast.error('Error with voice recording. Please try again or use text input instead.');
+      setIsListening(false);
     }
-  }, [onTranscript]);
+  };
 
   const handleTextSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,12 +49,12 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript }) => {
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-metro-blue/20 to-metro-red/20 rounded-full blur-xl transform scale-105 -z-10"></div>
         <button
-          onClick={startListening}
+          onClick={handleVoiceInput}
           className={`relative p-7 rounded-full transition-all duration-300 ease-in-out shadow-lg 
             ${isListening 
               ? 'bg-gradient-to-br from-metro-red to-metro-red/80 scale-105' 
               : 'bg-white hover:bg-gray-50 border border-gray-100'}`}
-          aria-label="Start voice input"
+          aria-label={isListening ? "Stop voice recording" : "Start voice recording"}
         >
           <Mic 
             className={`w-8 h-8 transition-colors duration-300

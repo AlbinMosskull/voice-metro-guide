@@ -8,26 +8,48 @@ This is an example Python backend for the Stockholm Metro Voice Assistant. It de
 1. Install the required Python packages:
 
 ```bash
-pip install flask flask-cors
+pip install flask flask-cors speech_recognition pyaudio
 ```
 
-2. Start the Python backend server:
+2. Start one of the Python backend servers:
 
 ```bash
+# For basic text processing only:
 python python_backend_example.py
+
+# For text processing + voice recording:
+python python_voice_recording_example.py
 ```
 
 3. The server will start on port 5000 and will be accessible at:
-   - http://localhost:5000/api/message
+   - http://localhost:5000/api/message (text processing endpoint)
+   - http://localhost:5000/api/record (voice recording endpoint - only in voice_recording_example.py)
 
 ## Testing with the Frontend
 
 Once the Python backend is running, the React frontend should be able to communicate with it. You can test this by:
 
-1. Speaking into the microphone or typing in the text input
-2. The frontend will send the request to this Python backend
-3. The backend will process the request and return a response
-4. The response will be displayed in the frontend UI
+1. Clicking the microphone button to start/stop recording via the Python backend
+2. Speaking into the microphone (handled by Python)
+3. Or typing in the text input
+4. The frontend will send the request to this Python backend
+5. The backend will process the request and return a response
+6. The response will be displayed in the frontend UI
+
+## Voice Recording Backend
+
+The `python_voice_recording_example.py` file demonstrates:
+- How to handle start/stop recording requests from the frontend
+- Using SpeechRecognition library to record and transcribe audio
+- Managing recording state in a background thread
+- Returning the transcription to the frontend
+
+## Text Processing Backend 
+
+The `python_backend_example.py` file demonstrates:
+- How to receive and process text queries
+- A simple pattern-matching system for Stockholm metro queries
+- How to return formatted responses to the frontend
 
 ## Customizing the Backend
 
@@ -52,5 +74,35 @@ You can customize the `manage_incoming_message` function to:
 ```json
 {
   "response": "The next train to T-Centralen will arrive in 5 minutes."
+}
+```
+
+### POST /api/record
+
+**Request Body for starting recording:**
+```json
+{
+  "action": "start_recording"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "recording_started"
+}
+```
+
+**Request Body for stopping recording:**
+```json
+{
+  "action": "stop_recording"
+}
+```
+
+**Response:**
+```json
+{
+  "transcript": "När går nästa tåg till T-Centralen?"
 }
 ```
