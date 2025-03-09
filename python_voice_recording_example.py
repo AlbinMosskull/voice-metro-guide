@@ -1,87 +1,31 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import speech_recognition as sr
 import threading
 import time
+from backend import manage_incoming_message_default_settings as manage_incoming_message
+from speech import speech_to_text
+from time import sleep
+
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-# Global variable to track recording state
-is_recording = False
-recognizer = sr.Recognizer()
-recording_thread = None
-transcript = ""
-
-def record_audio():
-    """Function to record audio in the background"""
-    global is_recording, transcript
-    
-    try:
-        with sr.Microphone() as source:
-            print("Adjusting for ambient noise...")
-            recognizer.adjust_for_ambient_noise(source, duration=0.5)
-            print("Recording started...")
-            
-            # Record audio
-            audio_data = recognizer.listen(source, timeout=10, phrase_time_limit=None)
-            
-            # Only process if we're still supposed to be recording
-            if is_recording:
-                try:
-                    # For Swedish language, use 'sv-SE'
-                    transcript = recognizer.recognize_google(audio_data, language='sv-SE')
-                    print(f"Transcription: {transcript}")
-                except sr.UnknownValueError:
-                    print("Google Speech Recognition could not understand audio")
-                    transcript = ""
-                except sr.RequestError as e:
-                    print(f"Could not request results from Google Speech Recognition service; {e}")
-                    transcript = ""
-    except Exception as e:
-        print(f"Error recording audio: {e}")
-    finally:
-        is_recording = False
-        print("Recording stopped")
 
 @app.route('/api/record', methods=['POST'])
-def toggle_recording():
-    """Endpoint that handles the toggle recording request"""
-    global is_recording, recording_thread, transcript
-    
-    data = request.json
-    is_recording_new_state = data.get('is_recording', False)
-    
-    # Start recording
-    if is_recording_new_state and not is_recording:
-        is_recording = True
-        transcript = ""  # Reset transcript
-        
-        # Start recording in a background thread
-        recording_thread = threading.Thread(target=record_audio)
-        recording_thread.daemon = True
-        recording_thread.start()
-        
-        return jsonify({"status": "recording_started"})
-    
-    # Stop recording
-    elif not is_recording_new_state and is_recording:
-        is_recording = False
-        
-        # Wait for the recording thread to finish
-        if recording_thread and recording_thread.is_alive():
-            time.sleep(1)  # Give a moment for the recording to finish
-        
-        return jsonify({"transcript": transcript})
-    
-    # No change needed
-    return jsonify({"status": "no_change"})
+def start_recording():
+	
+	print("Recording started...")
+	user_prompt = speech_to_text(play_recording=False)
+	print("user prompt is: ", user_prompt)
+		
+	response = manage_incoming_message(user_prompt)
+
+	return jsonify({"response": response})
 
 @app.route('/api/message', methods=['POST'])
 def process_message():
     """Original endpoint that receives messages from the frontend"""
-    from python_backend_example import manage_incoming_message
     
     data = request.json
     user_input = data.get('user_input', '')
