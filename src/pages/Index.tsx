@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import VoiceInput from '../components/VoiceInput';
 import ResponseDisplay from '../components/ResponseDisplay';
@@ -10,8 +9,16 @@ const Index = () => {
   const [response, setResponse] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleTranscript = async (text: string) => {
+  const handleTranscript = async (text: string, voiceResponse?: string) => {
     setTranscript(text);
+    
+    // If we already have a response from voice processing, use it
+    if (voiceResponse) {
+      setResponse(voiceResponse);
+      return;
+    }
+    
+    // Otherwise, send a request to the backend
     setIsLoading(true);
     
     try {

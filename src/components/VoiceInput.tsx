@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { toggleVoiceRecording } from '../services/voiceService';
 
 interface VoiceInputProps {
-  onTranscript: (text: string) => void;
+  onTranscript: (text: string, response?: string) => void;
 }
 
 const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript }) => {
@@ -21,9 +21,9 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript }) => {
         // Send request to start recording
         const result = await toggleVoiceRecording(true);
         
-        // Process the transcript (if any)
-        if (result.trim()) {
-          onTranscript(result);
+        // Process the transcript and response (if any)
+        if (result.user_prompt || result.response) {
+          onTranscript(result.user_prompt || '', result.response);
         }
         
         // Reset the listening state

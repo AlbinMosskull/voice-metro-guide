@@ -25,7 +25,10 @@ def start_recording():
         # Process the speech input
         response = manage_incoming_message(user_prompt)
         
-        return jsonify({"response": response})
+        return jsonify({
+            "user_prompt": user_prompt,
+            "response": response
+        })
     
     return jsonify({"error": "Recording not started"}), 400
 
