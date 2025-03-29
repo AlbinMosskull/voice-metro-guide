@@ -6,9 +6,9 @@
 /**
  * Sends a signal to the Python backend to toggle voice recording
  * @param isRecording Boolean indicating whether to start or stop recording
- * @returns A promise that resolves with the transcription result when stopping recording
+ * @returns A promise that resolves with the transcription result
  */
-export const toggleVoiceRecording = async (isRecording: boolean): Promise<string | void> => {
+export const toggleVoiceRecording = async (isRecording: boolean): Promise<string> => {
   try {
     // Send a request to the Python backend with the recording state
     const response = await fetch('http://localhost:5000/api/record', {
@@ -25,12 +25,8 @@ export const toggleVoiceRecording = async (isRecording: boolean): Promise<string
 
     const data = await response.json();
     
-    // Only return transcript when stopping recording
-    if (!isRecording && data.transcript) {
-      return data.transcript;
-    }
-    
-    return;
+    // Return the transcript or an empty string
+    return data.response || '';
   } catch (error) {
     console.error('Error communicating with voice recording service:', error);
     throw error;

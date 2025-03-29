@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Mic, Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -13,15 +14,20 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript }) => {
 
   const handleVoiceInput = async () => {
     try {
-      // Toggle recording state
-      setIsListening(!isListening);
-      
-      // Send the new recording state to the backend
-      const result = await toggleVoiceRecording(!isListening);
-      
-      // If we're stopping recording and got a transcript, process it
-      if (isListening && result) {
-        onTranscript(result);
+      if (!isListening) {
+        // Start recording
+        setIsListening(true);
+        
+        // Send request to start recording
+        const result = await toggleVoiceRecording(true);
+        
+        // Process the transcript (if any)
+        if (result.trim()) {
+          onTranscript(result);
+        }
+        
+        // Reset the listening state
+        setIsListening(false);
       }
     } catch (error) {
       console.error('Voice recording error:', error);
@@ -44,11 +50,12 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript }) => {
         <div className="absolute inset-0 bg-gradient-to-r from-metro-blue/20 to-metro-red/20 rounded-full blur-xl transform scale-105 -z-10"></div>
         <button
           onClick={handleVoiceInput}
+          disabled={isListening}
           className={`relative p-7 rounded-full transition-all duration-300 ease-in-out shadow-lg 
             ${isListening 
               ? 'bg-gradient-to-br from-metro-red to-metro-red/80 scale-105' 
               : 'bg-white hover:bg-gray-50 border border-gray-100'}`}
-          aria-label={isListening ? "Stop voice recording" : "Start voice recording"}
+          aria-label={isListening ? "Recording in progress" : "Start voice recording"}
         >
           <Mic 
             className={`w-8 h-8 transition-colors duration-300

@@ -14,14 +14,20 @@ CORS(app)  # Enable CORS for all routes
 
 @app.route('/api/record', methods=['POST'])
 def start_recording():
-	
-	print("Recording started...")
-	user_prompt = speech_to_text(play_recording=False)
-	print("user prompt is: ", user_prompt)
-		
-	response = manage_incoming_message(user_prompt)
-
-	return jsonify({"response": response})
+    data = request.json
+    is_recording = data.get('is_recording', False)
+    
+    if is_recording:
+        print("Recording started...")
+        user_prompt = speech_to_text(play_recording=False)
+        print("user prompt is: ", user_prompt)
+        
+        # Process the speech input
+        response = manage_incoming_message(user_prompt)
+        
+        return jsonify({"response": response})
+    
+    return jsonify({"error": "Recording not started"}), 400
 
 @app.route('/api/message', methods=['POST'])
 def process_message():
