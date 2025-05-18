@@ -1,35 +1,58 @@
-import { useState } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import VoiceInput from '../components/VoiceInput';
 import ResponseDisplay from '../components/ResponseDisplay';
 import { toast } from 'sonner';
-import { sendMessageToPythonBackend } from '../services/messageService';
+import { startVoiceRecording } from '../services/voiceService';
+import { getPendingAction, Action } from '../services/actionService';
 
 const Index = () => {
-  const [transcript, setTranscript] = useState('');
-  const [response, setResponse] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [currentAction, setCurrentAction] = useState<Action | null>(null);
 
-  const handleTranscript = async (text: string, voiceResponse?: string) => {
-    setTranscript(text);
+  // Function to poll for actions
+  const pollForActions = useCallback(async () => {
+    if (!isListening) return;
+
+    try {
+      const action = await getPendingAction();
+      
+      // If we got a meaningful action, stop listening and update the UI
+      if (action && action.action !== 'none') {
+        setCurrentAction(action);
+        setIsListening(false);
+      }
+    } catch (error) {
+      console.error('Error polling for actions:', error);
+      toast.error('Failed to get action information. Please try again.');
+      setIsListening(false);
+    }
+  }, [isListening]);
+
+  // Setup polling at regular intervals
+  useEffect(() => {
+    let intervalId: number | undefined;
     
-    // If we already have a response from voice processing, use it
-    if (voiceResponse) {
-      setResponse(voiceResponse);
-      return;
+    if (isListening) {
+      intervalId = window.setInterval(pollForActions, 1000); // Poll every second
     }
     
-    // Otherwise, send a request to the backend
-    setIsLoading(true);
+    return () => {
+      if (intervalId) window.clearInterval(intervalId);
+    };
+  }, [isListening, pollForActions]);
+
+  // Handle starting the voice recording
+  const handleStartListening = async () => {
+    setIsListening(true);
+    setCurrentAction(null);
     
     try {
-      // Call the Python backend with the user input
-      const pythonResponse = await sendMessageToPythonBackend(text);
-      setResponse(pythonResponse);
+      await startVoiceRecording();
     } catch (error) {
-      console.error('Error fetching response:', error);
-      toast.error('Failed to get metro information. Please try again.');
-    } finally {
-      setIsLoading(false);
+      console.error('Error starting voice recording:', error);
+      toast.error('Failed to start voice recording. Please try again.');
+      setIsListening(false);
     }
   };
 
@@ -45,17 +68,13 @@ const Index = () => {
             Stockholm Metro Voice Assistant
           </h1>
           <p className="text-lg text-gray-600 max-w-xl leading-relaxed">
-            Ask questions about the Stockholm metro system using your voice or text
+            Ask questions about the Stockholm metro system using your voice
           </p>
         </div>
 
-        <VoiceInput onTranscript={handleTranscript} />
+        <VoiceInput onStartListening={handleStartListening} isListening={isListening} />
         
-        <ResponseDisplay 
-          transcript={transcript}
-          response={response}
-          isLoading={isLoading}
-        />
+        <ResponseDisplay action={currentAction} />
 
         <div className="absolute bottom-0 right-0 w-full h-64 bg-gradient-to-r from-metro-red/5 to-metro-blue/5 blur-3xl -z-10"></div>
       </div>
