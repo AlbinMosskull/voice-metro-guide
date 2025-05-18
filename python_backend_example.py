@@ -66,6 +66,24 @@ def get_pending_action():
     else:
         return jsonify({"action": "none"})
 
+# --- Endpoint to start the program ---
+@app.route('/api/start', methods=['POST'])
+def start_program_endpoint():
+    """Frontend calls this to start the program."""
+    print("Received /api/start request.")
+
+    # Clear any previous pending action when starting a new session
+    set_pending_action(None)
+
+    # Start the run_program logic in a separate thread
+    thread = threading.Thread(target=run_program)
+    # thread.daemon = True # Consider if you want the Flask server to exit if this thread is still running
+    thread.start()
+    print("Started run_program in a background thread.")
+
+    # Respond immediately to the frontend that the program is starting
+    return jsonify({"status": "program_starting", "message": "The background program is starting."})
+
 
 if __name__ == '__main__':
     print("Starting Flask server for Stockholm Metro voice assistant...")
