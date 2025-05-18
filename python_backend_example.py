@@ -2,52 +2,75 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import time
+from time import sleep
+import threading
+import queue
+
+
+from openai_realtime import OpenAIRealtimeClient
+from audio_output import start_audio_output_worker
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-def manage_incoming_message(user_input):
-    """
-    This is where your custom logic would go.
-    You could integrate with OpenAI, SL APIs, or any other services here.
-    
-    For this example, we're just returning a dummy response with the user input echoed back.
-    """
-    # Simulate some processing time
-    time.sleep(0.5)
-    
-    # Example response format
-    response = f"You asked about: '{user_input}'. Here's information about Stockholm metro stations..."
-    
-    # You could add more sophisticated processing here:
-    if "t-centralen" in user_input.lower():
-        response = "T-Centralen is the central station in Stockholm's metro system, connecting all lines."
-    elif "red line" in user_input.lower():
-        response = "The Red Line (Röda linjen) consists of lines 13 and 14, running from Norsborg/Fruängen to Ropsten/Mörby Centrum."
-    elif "blue line" in user_input.lower():
-        response = "The Blue Line (Blå linjen) consists of line 10 and 11, running from Kungsträdgården to Hjulsta/Akalla."
-    
-    return response
+_pending_action = None
+_pending_action_lock = threading.Lock()
 
-@app.route('/api/message', methods=['POST'])
-def process_message():
-    """
-    Endpoint that receives messages from the frontend
-    """
-    data = request.json
-    user_input = data.get('user_input', '')
-    
-    if not user_input:
-        return jsonify({"error": "No input provided"}), 400
-    
-    # Call your custom function to process the message
-    response = manage_incoming_message(user_input)
-    
-    # Return the response to the frontend
-    return jsonify({"response": response})
+def set_pending_action(action_data):
+    """Safely sets the global _pending_action variable."""
+    with _pending_action_lock:
+        global _pending_action
+        _pending_action = action_data
+        print(f"Global _pending_action set by background logic: {_pending_action}")
+
+def run_program():
+    audio_q = queue.Queue()
+
+    start_audio_output_worker(audio_q)
+
+    def get_openai_api_key() -> str:
+        f = open('./apikey.txt', 'r', encoding='utf-8')
+        API_KEY = f.readlines()[0]
+        return API_KEY
+
+    realtime_client = OpenAIRealtimeClient(
+        get_openai_api_key(), audio_q
+    )
+    realtime_client.set_pending_action_callback(set_pending_action)
+    realtime_client.run()
+    realtime_client.sleep_until_connected()
+
+    print("WebSocket connection established.")
+    print("Start talking to the assistant...")
+
+    # Kill the thread after some time
+    time_until_kill = 60
+    realtime_client.keep_alive_for(time_until_kill)
+    print("WebSocket connection closed.")
+
+@app.route('/api/get_action', methods=['GET'])
+def get_pending_action():
+    """Frontend calls this periodically to check for actions from the backend."""
+
+    action_to_return = None
+
+    # Safely retrieve and clear the pending action
+    with _pending_action_lock:
+        global _pending_action
+        action_to_return = _pending_action
+        _pending_action = None
+
+
+    if action_to_return:
+        return jsonify(action_to_return)
+    else:
+        return jsonify({"action": "none"})
+
 
 if __name__ == '__main__':
-    print("Starting Flask server for Stockholm Metro assistant...")
+    print("Starting Flask server for Stockholm Metro voice assistant...")
     print("Server running at http://localhost:5000")
-    print("Ready to receive requests at http://localhost:5000/api/message")
+    print("Ready to receive requests at:")
+    print("- http://localhost:5000/api/record (for voice recording)")
+    print("- http://localhost:5000/api/message (for text processing)")
     app.run(host='0.0.0.0', port=5000, debug=True)
