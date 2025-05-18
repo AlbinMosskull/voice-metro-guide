@@ -4,11 +4,12 @@ import VoiceInput from '../components/VoiceInput';
 import ResponseDisplay from '../components/ResponseDisplay';
 import { toast } from 'sonner';
 import { startVoiceRecording } from '../services/voiceService';
-import { getPendingAction, Action } from '../services/actionService';
+import { getPendingAction, TicketAction, RouteAction } from '../services/actionService';
 
 const Index = () => {
   const [isListening, setIsListening] = useState(false);
-  const [currentAction, setCurrentAction] = useState<Action | null>(null);
+  const [ticketAction, setTicketAction] = useState<TicketAction | null>(null);
+  const [routeAction, setRouteAction] = useState<RouteAction | null>(null);
 
   // Function to poll for actions
   const pollForActions = useCallback(async () => {
@@ -19,8 +20,15 @@ const Index = () => {
       
       // If we got a meaningful action, stop listening and update the UI
       if (action && !('action' in action && action.action === 'none')) {
-        setCurrentAction(action);
-        setIsListening(false);
+        if (action.type === 'ticket') {
+          console.log('Received ticket action:', action);
+          setTicketAction(action);
+        } else if (action.type === 'route_info') {
+          console.log('Received route action:', action);
+          setRouteAction(action);
+        }
+        // console.log('Stopping listening (polling) now.');
+        // setIsListening(false);
       }
     } catch (error) {
       console.error('Error polling for actions:', error);
@@ -45,7 +53,8 @@ const Index = () => {
   // Handle starting the voice recording
   const handleStartListening = async () => {
     setIsListening(true);
-    setCurrentAction(null);
+    setTicketAction(null);
+    setRouteAction(null);
     
     try {
       await startVoiceRecording();
@@ -55,6 +64,10 @@ const Index = () => {
       setIsListening(false);
     }
   };
+
+  console.log('Current ticketAction:', ticketAction);
+  console.log('Current routeAction:', routeAction);
+
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-white via-slate-50 to-metro-gray/10">
@@ -74,7 +87,7 @@ const Index = () => {
 
         <VoiceInput onStartListening={handleStartListening} isListening={isListening} />
         
-        <ResponseDisplay action={currentAction} />
+        <ResponseDisplay ticketAction={ticketAction} routeAction={routeAction} />
 
         <div className="absolute bottom-0 right-0 w-full h-64 bg-gradient-to-r from-metro-red/5 to-metro-blue/5 blur-3xl -z-10"></div>
       </div>

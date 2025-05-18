@@ -5,22 +5,18 @@ import TicketDisplay from './TicketDisplay';
 import RouteDisplay from './RouteDisplay';
 
 interface ResponseDisplayProps {
-  action: Action | null;
+  routeAction: RouteAction | null;
+  ticketAction: TicketAction | null;
 }
 
-const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ action }) => {
-  if (!action) return null;
-  if ('action' in action && action.action === 'none') return null;
+const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ ticketAction, routeAction }) => {
+  // if (!action) return null;
+  // if ('action' in action && action.action === 'none') return null;
 
   return (
     <div className="w-full max-w-2xl space-y-6">
-      {action.type === 'ticket' && (
-        <TicketDisplay action={action as TicketAction} />
-      )}
-      
-      {action.type === 'route_info' && (
-        <RouteDisplay action={action as RouteAction} />
-      )}
+      {routeAction && <RouteDisplay action={routeAction} />}
+      {ticketAction && <TicketDisplay action={ticketAction} />}
     </div>
   );
 };
