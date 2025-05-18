@@ -9,7 +9,8 @@ interface ResponseDisplayProps {
 }
 
 const ResponseDisplay: React.FC<ResponseDisplayProps> = ({ action }) => {
-  if (!action || action.type === 'none') return null;
+  if (!action) return null;
+  if ('action' in action && action.action === 'none') return null;
 
   return (
     <div className="w-full max-w-2xl space-y-6">

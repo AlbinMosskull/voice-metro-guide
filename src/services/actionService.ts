@@ -17,7 +17,7 @@ export interface RouteAction {
 }
 
 interface NoneAction {
-  type: 'none';
+  action: 'none';
 }
 
 export type Action = TicketAction | RouteAction | NoneAction;

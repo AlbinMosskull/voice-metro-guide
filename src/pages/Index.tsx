@@ -18,7 +18,7 @@ const Index = () => {
       const action = await getPendingAction();
       
       // If we got a meaningful action, stop listening and update the UI
-      if (action && action.type !== 'none') {
+      if (action && !('action' in action && action.action === 'none')) {
         setCurrentAction(action);
         setIsListening(false);
       }
