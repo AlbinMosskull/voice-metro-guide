@@ -16,7 +16,11 @@ export interface RouteAction {
   total_duration: string;
 }
 
-export type Action = TicketAction | RouteAction | { action: 'none' };
+interface NoneAction {
+  type: 'none';
+}
+
+export type Action = TicketAction | RouteAction | NoneAction;
 
 /**
  * Polls the Python backend for any pending actions
